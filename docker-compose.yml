@@ -34,7 +34,7 @@
 #
 #  !!!!! MAKE SURE your folder './init' is executable (chmod +x ./init)
 #  !!!!! or 'initdb.sql' will be ignored!
-#  
+#
 #  './data' will hold all data after first start!
 #
 # (2)
@@ -96,10 +96,12 @@ services:
   # guacd
   guacd:
     container_name: guacd_compose
-    image: guacamole/guacd
+    image: guacamole/guacd:latest
     networks:
       guacnetwork_compose:
     restart: always
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
     volumes:
     - ./drive:/drive:rw
     - ./record:/record:rw
@@ -115,6 +117,8 @@ services:
     networks:
       guacnetwork_compose:
     restart: always
+    ports:
+      - 5432:5432
     volumes:
     - ./init:/docker-entrypoint-initdb.d:z
     - ./data:/var/lib/postgresql/data:Z
@@ -131,16 +135,23 @@ services:
       POSTGRES_HOSTNAME: postgres
       POSTGRES_PASSWORD: 'ChooseYourOwnPasswordHere1234'
       POSTGRES_USER: guacamole_user
-    image: guacamole/guacamole
+      LOGBACK_LEVEL: debug
+      GUACAMOLE_HOME: /opt/guacamole-dockerized
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
+    image: guacamole/guacamole:latest
+    volumes:
+      - ./guacamole:/opt/guacamole-dockerized
+      - /var/run/docker.sock:/var/run/docker.sock
     links:
     - guacd
     networks:
       guacnetwork_compose:
     ports:
 ## enable next line if not using nginx
-##    - 8080:8080/tcp # Guacamole is on :8080/guacamole, not /.
+    - 8080:8080/tcp # Guacamole is on :8080/guacamole, not /.
 ## enable next line when using nginx
-    - 8080/tcp
+      #- 8080/tcp
     restart: always
 
 ########### optional ##############
@@ -150,6 +161,7 @@ services:
    restart: always
    image: nginx
    volumes:
+   - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
    - ./nginx/templates:/etc/nginx/templates:ro
    - ./nginx/ssl/self.cert:/etc/nginx/ssl/self.cert:ro
    - ./nginx/ssl/self-ssl.key:/etc/nginx/ssl/self-ssl.key:ro
@@ -157,6 +169,15 @@ services:
    - 8443:443
    links:
    - guacamole
+   networks:
+     guacnetwork_compose:
+  vnc:
+   container_name: vnc_guacamole_compose
+   restart: always
+   image: dorowu/ubuntu-desktop-lxde-vnc
+   ports:
+    - 5900
+    - 80
    networks:
      guacnetwork_compose:
 ####################################################################################

@@ -1,8 +1,8 @@
 ### BBB
 server {
-    listen       443 ssl http2;
+    listen       0.0.0.0:443 ssl;
+    http2        on;
     server_name  localhost;
-
         ssl_certificate /etc/nginx/ssl/self.cert;
         ssl_certificate_key /etc/nginx/ssl/self-ssl.key;
 
@@ -23,7 +23,7 @@ server {
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection $http_connection;
     proxy_cookie_path /guacamole/ /;
-    access_log off;
+    access_log main;
     # allow large uploads (default=1m)
     # 4096m = 4GByte
     client_max_body_size 4096m;
@@ -39,3 +39,4 @@ server {
     }
 
 }
+
